@@ -19,6 +19,8 @@ namespace circuits {
     class Circuit : public AbstractCircuitComponent {
     public:
         
+        friend class TargetComponentSelector;
+        
         Circuit(const std::string& name, size_t inputPins, size_t outputPins) :
         AbstractCircuitComponent{checkName(name)},
         m_number_of_input_pins {checkInputPinCount(inputPins)},
@@ -86,8 +88,45 @@ namespace circuits {
             m_component_set.insert(circuit);
         }
         
+        size_t getNumberOfInputPins() {
+            return m_number_of_input_pins;
+        }
+        
+        size_t getNumberOfOutputPins() {
+            return m_number_of_output_pins;
+        }
+        
         bool doCycle() const {
-            return true;
+            for (OutputGate* output_gate : m_output_gates) {
+                output_gate->doCycle();
+            }
+            
+            return false;
+        }
+        
+        void setInputBits(std::vector<bool>& bits) {
+            unsetAllInputPins();
+            
+            for (size_t i = 0; i < bits.size(); ++i) {
+                m_input_gates[i]->setBit(bits[i]);
+            }
+        }
+        
+        std::vector<bool>&& doCycle(std::vector<bool>& bits) {
+            setInputBits(bits);
+            doCycle();
+            return getOutputBits();
+        }
+        
+        std::vector<bool>&& getOutputBits() {
+            std::vector<bool> output_bits{};
+            output_bits.resize(m_number_of_output_pins);
+            
+            for (size_t i = 0; i < m_output_gates.size(); ++i) {
+                output_bits[i] = m_output_gates[i]->doCycle();
+            }
+            
+            return std::move(output_bits);
         }
         
         std::vector<AbstractCircuitComponent*>&& getInputComponents() const {
@@ -188,10 +227,44 @@ namespace circuits {
             
             return gate_name;
         }
+        
+        void unsetAllInputPins() {
+            for (InputGate* input_gate : m_input_gates) {
+                input_gate->setBit(false);
+            }
+        }
     };
     
     const std::string Circuit::INPUT_PIN_NAME_PREFIX  = "inputPin";
     const std::string Circuit::OUTPUT_PIN_NAME_PREFIX = "outputPin";
+    
+    class TargetComponentSelector {
+    public:
+        
+        TargetComponentSelector(Circuit* owner_circuit,
+                                const std::string& source_component_name) :
+        m_owner_circuit{owner_circuit} {
+            AbstractCircuitComponent* source_component;
+            
+            if (source_component_name.find(".") != std::string::npos) {
+                source_component = nullptr;
+            } else {
+                source_component =
+                owner_circuit->m_component_map[source_component_name];
+            }
+            
+            if (source_component == nullptr) {
+                
+            }
+            
+            this->source_component = source_component;
+        }
+        
+    private:
+        
+        Circuit* m_owner_circuit;
+        AbstractCircuitComponent* source_component;
+    };
     
 } // End of namespace net::coderodde::circuits.
 } // End of namespace net::coderodde.
