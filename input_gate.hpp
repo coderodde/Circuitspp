@@ -4,8 +4,6 @@
 #include "abstract_circuit_component.hpp"
 #include "abstract_single_input_pin_circuit_component.hpp"
 #include <string>
-#include <utility>
-#include <vector>
 
 namespace net {
 namespace coderodde {
