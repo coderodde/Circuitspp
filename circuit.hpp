@@ -432,6 +432,52 @@ namespace circuits {
             }
         }
         
+        void to(std::string const& target_component_name) {
+            AbstractCircuitComponent* target_component =
+            getTargetComponent(target_component_name);
+            
+            checkIsSingleInputGate(target_component);
+            
+            if (((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->getInputComponent() != nullptr) {
+                throw InputPinOccupiedException{
+                    "The only input pin is occupied."
+                };
+            }
+            
+            if (m_source_component->getOutputComponent() == nullptr) {
+                ((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->setInputComponent(m_source_component);
+                
+                m_source_component->setOutputComponent(target_component);
+            } else if (
+                       isBranchWire(m_source_component->getOutputComponent())) {
+                ((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->setInputComponent(m_source_component->getOutputComponent());
+                
+                ((BranchWire*) m_source_component->getOutputComponent())
+                ->connectTo(target_component);
+            } else {
+                // Replace an existing wire with BranchWire.
+                BranchWire* branch_wire = new BranchWire();
+                
+                // Introduce the BranchWire to the circuit.
+                m_owner_circuit->m_component_set.insert(branch_wire);
+                
+                // Load the BranchWire outputs.
+                branch_wire->connectTo(
+                            m_source_component->getOutputComponent());
+                
+                branch_wire->connectTo(target_component);
+                
+                m_source_component->setOutputComponent(branch_wire);
+                ((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->setInputComponent(branch_wire);
+                
+                branch_wire->setInputComponent(m_source_component);
+            }
+        }
+        
     private:
         
         Circuit* m_owner_circuit;
