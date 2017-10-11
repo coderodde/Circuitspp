@@ -15,7 +15,7 @@ namespace circuits {
     public:
                 
         OrGate(const std::string& name) :
-        AbstractDoubleInputPinCircuitComponent{name} {}
+        AbstractDoubleInputPinCircuitComponent{name} {}
                 
         bool doCycle() const {
             return m_input1->doCycle() || m_input2->doCycle();

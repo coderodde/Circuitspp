@@ -18,7 +18,7 @@ namespace circuits {
     public:
         
         AbstractSingleInputPinCircuitComponent(const std::string& name) :
-        AbstractCircuitComponent{name} {}
+        AbstractCircuitComponent{name} {}
         
         AbstractCircuitComponent* getInputComponent() {
             return m_input;
