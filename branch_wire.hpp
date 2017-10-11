@@ -5,6 +5,7 @@
 #include "abstract_single_input_pin_circuit_component.hpp"
 #include <string>
 #include <unordered_set>
+#include <utility>
 
 namespace net {
 namespace coderodde {
@@ -13,7 +14,7 @@ namespace circuits {
     class BranchWire : public AbstractSingleInputPinCircuitComponent {
     public:
         
-        BranchWire() : AbstractSingleInputPinCircuit{nullptr} {}
+        BranchWire() : AbstractSingleInputPinCircuitComponent{nullptr} {}
         
         bool doCycle() const {
             return m_input->doCycle();
@@ -30,7 +31,7 @@ namespace circuits {
         std::vector<AbstractCircuitComponent*>&& getOutputComponents() {
             std::vector<AbstractCircuitComponent*> output_components;
             output_components.assign(m_outputs.cbegin(), m_outputs.cend()); 
-            return output_components;
+            return std::move(output_components);
         }
         
     private:
