@@ -1,7 +1,7 @@
 #ifndef NET_CODERODDE_CIRCUITS_ABSTRACT_DOUBLE_INPUT_PIN_CIRCUIT_COMPONENT_HPP
 #define NET_CODERODDE_CIRCUITS_ABSTRACT_DOUBLE_INPUT_PIN_CIRCUIT_COMPONENT_HPP
 
-#include "abstract_circuit_component.hpp"
+#include "AbstractCircuitComponent.hpp"
 #include <string>
 #include <utility>
 

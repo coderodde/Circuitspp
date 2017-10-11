@@ -1,8 +1,7 @@
 #ifndef NET_CODERODDE_CIRCUITS_INPUT_GATE_HPP
 #define NET_CODERODDE_CIRCUITS_INPUT_GATE_HPP
 
-#include "abstract_circuit_component.hpp"
-#include "abstract_single_input_pin_circuit_component.hpp"
+#include "../AbstractSingleInputPinCircuitComponent.hpp"
 #include <string>
 
 namespace net {

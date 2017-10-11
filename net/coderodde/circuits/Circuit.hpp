@@ -1,14 +1,17 @@
 #ifndef NET_CODERODDE_CIRCUITS_CIRCUIT_HPP
 #define NET_CODERODDE_CIRCUITS_CIRCUIT_HPP
 
-#include "abstract_circuit_component.hpp"
-#include "abstract_single_input_pin_circuit_component.hpp"
-#include "branch_wire.hpp"
-#include "input_gate.hpp"
+#include "InputPinOccupiedException.hpp"
+#include "components/AbstractCircuitComponent.hpp"
+#include "components/AbstractDoubleInputPinCircuitComponent.hpp"
+#include "components/AbstractSingleInputPinCircuitComponent.hpp"
+#include "components/support/AndGate.hpp"
+#include "components/support/BranchWire.hpp"
+#include "components/support/InputGate.hpp"
+#include "components/support/NotGate.hpp"
+#include "components/support/OrGate.hpp"
+#include "components/support/OutputGate.hpp"
 
-#include "InputPinOccupiedException"
-
-#include "output_gate.hpp"
 #include <iterator>
 #include <sstream>
 #include <stdexcept>

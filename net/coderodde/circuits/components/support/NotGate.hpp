@@ -1,8 +1,8 @@
 #ifndef NET_CODERODDE_CIRCUITS_NOT_GATE_HPP
 #define NET_CODERODDE_CIRCUITS_NOT_GATE_HPP
 
-#include "abstract_circuit_component.hpp"
-#include "abstract_single_input_pin_circuit_component.hpp"
+#include "../AbstractCircuitComponent.hpp"
+#include "../AbstractSingleInputPinCircuitComponent.hpp"
 #include <string>
 #include <utility>
 #include <vector>

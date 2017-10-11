@@ -1,8 +1,8 @@
-#include "and_gate.hpp"
-#include "or_gate.hpp"
-#include "not_gate.hpp"
-#include "circuit.hpp"
-#include "input_gate.hpp"
+#include "net/coderodde/circuits/Circuit.hpp"
+#include "net/coderodde/circuits/components/support/AndGate.hpp"
+#include "net/coderodde/circuits/components/support/NotGate.hpp"
+#include "net/coderodde/circuits/components/support/OrGate.hpp"
+#include "net/coderodde/circuits/components/support/InputGate.hpp"
 #include <iostream>
 
 using net::coderodde::circuits::NotGate;

@@ -1,8 +1,7 @@
 #ifndef NET_CODERODDE_CIRCUITS_AND_GATE_HPP
 #define NET_CODERODDE_CIRCUITS_AND_GATE_HPP
 
-#include "abstract_circuit_component.hpp"
-#include "abstract_double_input_pin_circuit_component.hpp"
+#include "../AbstractDoubleInputPinCircuitComponent.hpp"
 #include <string>
 #include <utility>
 #include <vector>
