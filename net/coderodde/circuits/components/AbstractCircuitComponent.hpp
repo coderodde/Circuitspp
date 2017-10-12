@@ -18,7 +18,7 @@ namespace circuits {
         
         AbstractCircuitComponent(const std::string& name) : m_name{name} {}
         
-        std::string& getName() { return m_name; }
+        std::string const& getName() const { return m_name; }
         
         virtual bool doCycle() const = 0;
         

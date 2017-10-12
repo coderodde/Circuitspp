@@ -1,6 +1,9 @@
 #ifndef NET_CODERODDE_CIRCUITS_CIRCUIT_HPP
 #define NET_CODERODDE_CIRCUITS_CIRCUIT_HPP
 
+#include "BackwardCycleException.hpp"
+#include "ForwardCycleException.hpp"
+#include "IncompleteCircuitException.hpp"
 #include "InputPinOccupiedException.hpp"
 #include "components/AbstractCircuitComponent.hpp"
 #include "components/AbstractDoubleInputPinCircuitComponent.hpp"
@@ -24,6 +27,12 @@
 namespace net {
 namespace coderodde {
 namespace circuits {
+    
+    enum class Color {
+        WHITE,
+        GRAY,
+        BLACK
+    };
     
     class Circuit : public AbstractCircuitComponent {
     public:
@@ -59,6 +68,63 @@ namespace circuits {
                 m_component_map[output_component_name] = output_component;
                 m_component_set.insert(output_component);
                 m_output_gates.push_back(output_component);
+            }
+        }
+        
+        Circuit(Circuit& circuit, std::string const& name)
+        :
+        Circuit{checkName(name),
+                circuit.m_number_of_input_pins,
+                circuit.m_number_of_output_pins} {
+            std::unordered_map<AbstractCircuitComponent*,
+                               AbstractCircuitComponent*> component_map;
+                    
+            for (InputGate* mapped_input_gate : m_input_gates) {
+                AbstractCircuitComponent* input_gate =
+                circuit.m_component_map[mapped_input_gate->getName()];
+                
+                component_map[input_gate] = mapped_input_gate;
+            }
+                    
+            for (OutputGate* mapped_output_gate : m_output_gates) {
+                AbstractCircuitComponent* output_gate =
+                circuit.m_component_map[mapped_output_gate->getName()];
+                
+                component_map[output_gate] = mapped_output_gate;
+            }
+                    
+            for (AbstractCircuitComponent* component :
+                 circuit.m_component_set) {
+                if (!isInputGate(component) && !isOutputGate(component)) {
+                    component_map[component, copyComponent(component)];
+                }
+            }
+                    
+            for (AbstractCircuitComponent* component :
+                 circuit.m_component_set) {
+                AbstractCircuitComponent* mapped_component =
+                component_map[component];
+                
+                for (AbstractCircuitComponent* input_component :
+                     component->getInputComponents()) {
+                    AbstractCircuitComponent* mapped_input_component =
+                    component_map[input_component];
+                    
+                    connectInput(component,
+                                 input_component,
+                                 mapped_component,
+                                 mapped_input_component);
+                }
+                
+                for (AbstractCircuitComponent* output_component :
+                     component->getOutputComponents()) {
+                    AbstractCircuitComponent* mapped_output_component =
+                    component_map[output_component];
+                    
+                    connectOutput(component,
+                                  mapped_component,
+                                  mapped_output_component);
+                }
             }
         }
         
@@ -338,7 +404,102 @@ namespace circuits {
             }
         }
         
+        void lock() {
+            if (m_locked) {
+                return;
+            }
+            
+            m_locked = true;
+            lockSubcircuits();
+            checkAllPinsAreConnected();
+            checkIsDagInForwardDirection();
+            checkIsDagInBackwardDirection();
+        }
+        
     private:
+        
+        bool isCircuit(AbstractCircuitComponent* circuit_candidate) {
+            return dynamic_cast<Circuit*>(circuit_candidate) != nullptr;
+        }
+        
+        void lockSubcircuits() {
+            for (AbstractCircuitComponent* component : m_component_set) {
+                if (isCircuit(component)) {
+                    ((Circuit*) component)->lock();
+                }
+            }
+        }
+        
+        void checkAllPinsAreConnected() {
+            for (const std::pair<std::string, AbstractCircuitComponent*> p :
+                 m_component_map) {
+                std::string name = p.first;
+                AbstractCircuitComponent* component = p.second;
+                
+                if (isSingleInputPinComponent(component)) {
+                    checkSingleInputComponentConnected(
+                            (AbstractSingleInputPinCircuitComponent*) component,
+                            name);
+                } else if (isDoubleInputPinComponent(component)) {
+                    checkDoubleInputComponentConnected(
+                            (AbstractDoubleInputPinCircuitComponent*) component,
+                            name);
+                } else {
+                    throw std::logic_error{"Unknown circuit type."};
+                }
+            }
+        }
+        
+        void checkOutputIsConnected(AbstractCircuitComponent* component,
+                                    std::string const& component_name) {
+            if (component->getOutputComponent() == nullptr) {
+                std::stringstream ss;
+                ss << "The output pin of \""
+                << component_name
+                << "\" is null.";
+                
+                throw IncompleteCircuitException{ss.str()};
+            }
+        }
+        
+        void checkSingleInputComponentConnected(
+                            AbstractSingleInputPinCircuitComponent* component,
+                            std::string const& component_name) {
+            if (component->getInputComponent() == nullptr) {
+                std::stringstream ss;
+                ss << "The only input pin of \""
+                   << component_name
+                   << "\" is null.";
+                
+                throw IncompleteCircuitException{ss.str()};
+            }
+            
+            checkOutputIsConnected(component, component_name);
+        }
+        
+        void checkDoubleInputComponentConnected(
+                            AbstractDoubleInputPinCircuitComponent* component,
+                            std::string const& component_name) {
+            if (component->getInputComponent1() == nullptr) {
+                std::stringstream ss;
+                ss << "The first input pin of \""
+                   << component_name
+                   << "\" is null.";
+                
+                throw IncompleteCircuitException{ss.str()};
+            }
+            
+            if (component->getInputComponent2() == nullptr) {
+                std::stringstream ss;
+                ss << "The second input pin of \""
+                   << component_name
+                   << "\" is null.";
+                
+                throw IncompleteCircuitException{ss.str()};
+            }
+            
+            checkOutputIsConnected(component, component_name);
+        }
         
         static const size_t MINIMUM_INPUT_PINS  = 1;
         static const size_t MINIMUM_OUTPUT_PINS = 1;
@@ -480,10 +641,6 @@ namespace circuits {
             return component;
         }
         
-        bool isBranchWire(AbstractCircuitComponent* component) {
-            return dynamic_cast<BranchWire*>(component) != nullptr;
-        }
-        
         bool isDoubleInputPinComponent(AbstractCircuitComponent* component) {
             return dynamic_cast<AbstractDoubleInputPinCircuitComponent*>
             (component) != nullptr;
@@ -493,7 +650,6 @@ namespace circuits {
             return dynamic_cast<AbstractSingleInputPinCircuitComponent*>
             (component) != nullptr;
         }
-        
         
         void checkIsSingleInputGate(AbstractCircuitComponent* gate) {
             if (dynamic_cast<AbstractSingleInputPinCircuitComponent*>(gate)
@@ -512,6 +668,128 @@ namespace circuits {
                 };
             }
         }
+        
+        void checkIsDagInForwardDirection() {
+            std::unordered_map<AbstractCircuitComponent*, Color> colors;
+            
+            for (AbstractCircuitComponent* component : m_component_set) {
+                colors[component] = Color::WHITE;
+            }
+            
+            for (AbstractCircuitComponent* component : m_input_gates) {
+                if (colors[component] == Color::WHITE) {
+                    dfsForwardVisit(component, colors);
+                }
+            }
+        }
+        
+        void checkIsDagInBackwardDirection() {
+            std::unordered_map<AbstractCircuitComponent*, Color> colors;
+            
+            for (AbstractCircuitComponent* component : m_component_set) {
+                colors[component] = Color::WHITE;
+            }
+            
+            for (AbstractCircuitComponent* component : m_output_gates) {
+                if (colors[component] == Color::WHITE) {
+                    dfsBackwardVisit(component, colors);
+                }
+            }
+        }
+        
+        void dfsForwardVisit(
+                AbstractCircuitComponent* component,
+                std::unordered_map<AbstractCircuitComponent*, Color>& colors) {
+            colors[component] = Color::GRAY;
+            
+            for (AbstractCircuitComponent* child :
+                 component->getOutputComponents()) {
+                if (colors[child] == Color::GRAY) {
+                    std::stringstream ss;
+                    ss << "Found a cycle in circuit\""
+                       << getName()
+                       << "\" in forward direction.";
+                    
+                    throw ForwardCycleException(ss.str());
+                }
+                
+                if (colors[child] == Color::WHITE) {
+                    dfsForwardVisit(child, colors);
+                }
+            }
+            
+            colors[component] = Color::BLACK;
+        }
+        
+        void dfsBackwardVisit(
+                AbstractCircuitComponent* component,
+                std::unordered_map<AbstractCircuitComponent*, Color>& colors) {
+            colors[component] = Color::GRAY;
+            
+            for (AbstractCircuitComponent* parent :
+                 component->getInputComponents()) {
+                if (colors[parent] == Color::GRAY) {
+                    std::stringstream ss;
+                    ss << "Found a cycle in circuit\""
+                       << getName()
+                       << "\" in backward direction.";
+                    
+                    throw BackwardCycleException(ss.str());
+                }
+                
+                if (colors[parent] == Color::WHITE) {
+                    dfsBackwardVisit(parent, colors);
+                }
+            }
+            
+            colors[component] = Color::BLACK;
+        }
+        
+        bool isInputGate(AbstractCircuitComponent* input_gate_candidate) {
+            return dynamic_cast<InputGate*>(input_gate_candidate) != nullptr;
+        }
+        
+        bool isOutputGate(AbstractCircuitComponent* output_gate_candidate) {
+            return dynamic_cast<OutputGate*>(output_gate_candidate) != nullptr;
+        }
+        
+        bool isAndGate(AbstractCircuitComponent* and_gate_candidiate) {
+            return dynamic_cast<AndGate*>(and_gate_candidiate) != nullptr;
+        }
+        
+        bool isOrGate(AbstractCircuitComponent* or_gate_candidate) {
+            return dynamic_cast<OrGate*>(or_gate_candidate) != nullptr;
+        }
+        
+        bool isNotGate(AbstractCircuitComponent* not_gate_candidate) {
+            return dynamic_cast<NotGate*>(not_gate_candidate) != nullptr;
+        }
+        
+        bool isBranchWire(AbstractCircuitComponent* branch_wire_candidate) {
+            return dynamic_cast<BranchWire*>(branch_wire_candidate) != nullptr;
+        }
+        
+        AbstractCircuitComponent* copyComponent(
+            AbstractCircuitComponent* component) {
+            if (isNotGate(component)) {
+                return new NotGate(component->getName());
+            }
+            
+            if (isAndGate(component)) {
+                return new AndGate(component->getName());
+            }
+            
+            if (isOrGate(component)) {
+                return new OrGate(component->getName());
+            }
+            
+            if (isBranchWire(component)) {
+                return new BranchWire();
+            }
+            
+            throw std::logic_error{"Should not get here."};
+        }
+        
     };
     
     const std::string Circuit::INPUT_PIN_NAME_PREFIX  = "inputPin";
