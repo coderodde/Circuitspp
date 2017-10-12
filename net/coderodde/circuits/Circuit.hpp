@@ -154,6 +154,190 @@ namespace circuits {
             return std::move(output_components);
         }
         
+        void connectToFirstInputPin(std::string const& source_component_name,
+                                    std::string const& target_component_name) {
+            AbstractCircuitComponent* source_component;
+            AbstractCircuitComponent* target_component;
+            
+            source_component = getComponentByName(source_component_name);
+            target_component = getComponentByName(target_component_name);
+            
+            checkIsDoubleInputGate(target_component);
+            
+            if (((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->getInputComponent1() != nullptr) {
+                throw InputPinOccupiedException{
+                    "The first input pin of ... is occupied"
+                };
+            }
+            
+            if (source_component->getOutputComponent() == nullptr) {
+                ((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->setInputComponent1(source_component);
+                
+                source_component->setOutputComponent(target_component);
+            } else if (isBranchWire(source_component->getOutputComponent())) {
+                ((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->setInputComponent1(source_component->getOutputComponent());
+                
+                ((BranchWire*) source_component->getOutputComponent())->
+                connectTo(target_component);
+            } else {
+                // Replace an existing wire with BranchWire.
+                BranchWire* branch_wire = new BranchWire();
+                
+                // Introduce the new BranchWire to the circuit.
+                m_component_set.insert(branch_wire);
+                
+                // Load the BranchWire outputs:
+                branch_wire->connectTo(
+                                       source_component->getOutputComponent());
+                
+                branch_wire->connectTo(target_component);
+                
+                if (isDoubleInputPinComponent(
+                                    source_component->getOutputComponent())) {
+                    AbstractDoubleInputPinCircuitComponent* tmp_component =
+                    (AbstractDoubleInputPinCircuitComponent*)
+                    source_component->getOutputComponent();
+                    
+                    if (tmp_component->getInputComponent2() ==
+                        source_component) {
+                        tmp_component->setInputComponent1(branch_wire);
+                    } else {
+                        tmp_component->setInputComponent2(branch_wire);
+                    }
+                } else {
+                    AbstractSingleInputPinCircuitComponent* tmp_component =
+                    (AbstractSingleInputPinCircuitComponent*)
+                    source_component->getOutputComponent();
+                    
+                    tmp_component->setInputComponent(branch_wire);
+                }
+                
+                ((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->setInputComponent1(branch_wire);
+                
+                source_component->setOutputComponent(branch_wire);
+                branch_wire->setInputComponent(source_component);
+            }
+        }
+        
+        void connectToSecondInputPin(std::string const& source_component_name,
+                                     std::string const& target_component_name) {
+            AbstractCircuitComponent* source_component;
+            AbstractCircuitComponent* target_component;
+            
+            source_component = getComponentByName(source_component_name);
+            target_component = getComponentByName(target_component_name);
+            
+            checkIsDoubleInputGate(target_component);
+            
+            if (((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->getInputComponent2() != nullptr) {
+                throw InputPinOccupiedException{
+                    "The second input pin of ... is occupied."
+                };
+            }
+            
+            if (source_component->getOutputComponent() == nullptr) {
+                ((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->setInputComponent2(source_component);
+                
+                source_component->setOutputComponent(target_component);
+            } else if (isBranchWire(source_component->getOutputComponent())) {
+                ((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->setInputComponent2(source_component->getOutputComponent());
+                
+                ((BranchWire*) source_component->getOutputComponent())
+                ->connectTo(target_component);
+            } else {
+                // Replace an existing wire with BranchWire.
+                BranchWire* branch_wire = new BranchWire();
+                
+                // Introduce the new BranchWire to the circuit.
+                m_component_set.insert(branch_wire);
+                
+                // Load the BranchWire outputs:
+                branch_wire->connectTo(source_component->getOutputComponent());
+                branch_wire->connectTo(target_component);
+                
+                if (isDoubleInputPinComponent(
+                                    source_component->getOutputComponent())) {
+                    AbstractDoubleInputPinCircuitComponent* tmp_component =
+                    (AbstractDoubleInputPinCircuitComponent*)
+                    source_component->getOutputComponent();
+                    
+                    if (tmp_component->getInputComponent1() ==
+                        source_component) {
+                        tmp_component->setInputComponent1(branch_wire);
+                    } else {
+                        tmp_component->setInputComponent2(branch_wire);
+                    }
+                } else {
+                    AbstractSingleInputPinCircuitComponent* tmp_component =
+                    (AbstractSingleInputPinCircuitComponent*)
+                    source_component->getOutputComponent();
+                    
+                    tmp_component->setInputComponent(branch_wire);
+                }
+                
+                ((AbstractDoubleInputPinCircuitComponent*) target_component)
+                ->setInputComponent2(branch_wire);
+                
+                source_component->setOutputComponent(branch_wire);
+                branch_wire->setInputComponent(source_component);
+            }
+        }
+        
+        void connectTo(std::string const& source_component_name,
+                       std::string const& target_component_name) {
+            AbstractCircuitComponent* source_component;
+            AbstractCircuitComponent* target_component;
+            
+            source_component = getComponentByName(source_component_name);
+            target_component = getComponentByName(target_component_name);
+            
+            checkIsSingleInputGate(target_component);
+            
+            if (((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->getInputComponent() != nullptr) {
+                throw InputPinOccupiedException{
+                    "The only input pin is occupied."
+                };
+            }
+            
+            if (source_component->getOutputComponent() == nullptr) {
+                ((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->setInputComponent(source_component);
+                
+                source_component->setOutputComponent(target_component);
+            } else if (
+                       isBranchWire(source_component->getOutputComponent())) {
+                ((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->setInputComponent(source_component->getOutputComponent());
+                
+                ((BranchWire*) source_component->getOutputComponent())
+                ->connectTo(target_component);
+            } else {
+                // Replace an existing wire with BranchWire.
+                BranchWire* branch_wire = new BranchWire();
+                
+                // Introduce the BranchWire to the circuit.
+                m_component_set.insert(branch_wire);
+                
+                // Load the BranchWire outputs.
+                branch_wire->connectTo(source_component->getOutputComponent());
+                branch_wire->connectTo(target_component);
+                
+                source_component->setOutputComponent(branch_wire);
+                ((AbstractSingleInputPinCircuitComponent*) target_component)
+                ->setInputComponent(branch_wire);
+                
+                branch_wire->setInputComponent(source_component);
+            }
+        }
+        
     private:
         
         static const size_t MINIMUM_INPUT_PINS  = 1;
@@ -173,6 +357,23 @@ namespace circuits {
         std::vector<OutputGate*> m_output_gates;
         
         bool m_locked{false};
+        
+        template<typename Out>
+        void split(std::string const& s, char delimeter, Out result) {
+            std::stringstream ss;
+            ss.str(s);
+            std::string item;
+            
+            while (std::getline(ss, item, delimeter)) {
+                *(result++) = item;
+            }
+        }
+        
+        std::vector<std::string> split(std::string const& s, char delimeter) {
+            std::vector<std::string> elements;
+            split(s, delimeter, std::back_inserter(elements));
+            return elements;
+        }
         
         const std::string& checkName(const std::string& name) {
             if (name.empty()) {
@@ -242,48 +443,21 @@ namespace circuits {
                 input_gate->setBit(false);
             }
         }
-    };
-    
-    const std::string Circuit::INPUT_PIN_NAME_PREFIX  = "inputPin";
-    const std::string Circuit::OUTPUT_PIN_NAME_PREFIX = "outputPin";
-    
-    template<typename Out>
-    void split(std::string const& s, char delimeter, Out result) {
-        std::stringstream ss;
-        ss.str(s);
-        std::string item;
         
-        while (std::getline(ss, item, delimeter)) {
-            *(result++) = item;
-        }
-    }
-    
-    std::vector<std::string> split(std::string const& s, char delimeter) {
-        std::vector<std::string> elements;
-        split(s, delimeter, std::back_inserter(elements));
-        return elements;
-    }
-    
-    class TargetComponentSelector {
-    public:
-        
-        TargetComponentSelector(Circuit* owner_circuit,
-                                const std::string& source_component_name) :
-        m_owner_circuit{owner_circuit} {
-            AbstractCircuitComponent* source_component;
-            std::vector<std::string> name_components =
-                split(source_component_name, '.');
+        AbstractCircuitComponent*
+        getComponentByName(std::string const& component_name) {
+            AbstractCircuitComponent* component;
             
-            if (name_components.size() > 1) {
-                
-                if (name_components.size() != 2) {
-                    throw std::invalid_argument{
-                        "More than one dot operators."
-                    };
+            std::vector<std::string> component_name_components =
+            split(component_name, '.');
+            
+            if (component_name_components.size() > 1) {
+                if (component_name_components.size() != 2) {
+                    throw std::invalid_argument{"More than one dot operators."};
                 }
                 
                 Circuit* subcircuit =
-                (Circuit*) owner_circuit->m_component_map[name_components[0]];
+                (Circuit*) m_component_map[component_name_components[0]];
                 
                 if (subcircuit == nullptr) {
                     throw std::invalid_argument{
@@ -291,200 +465,20 @@ namespace circuits {
                     };
                 }
                 
-                source_component =
-                subcircuit->m_component_map[name_components[1]];
+                component =
+                subcircuit->m_component_map[component_name_components[1]];
             } else {
-                source_component =
-                owner_circuit->m_component_map[source_component_name];
+                component = m_component_map[component_name];
             }
             
-            if (source_component == nullptr) {
-                
-            }
-            
-            this->m_source_component = source_component;
-        }
-        
-        void toFirstPinOf(std::string const& target_component_name) {
-            AbstractCircuitComponent* target_component =
-            getTargetComponent(target_component_name);
-            
-            checkIsDoubleInputGate(target_component);
-            
-            if (((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->getInputComponent1() != nullptr) {
-                throw InputPinOccupiedException{
-                    "The first input pin of ... is occupied"
+            if (component == nullptr) {
+                throw std::invalid_argument{
+                    "The target component is not present in the circuit."
                 };
             }
             
-            if (m_source_component->getOutputComponent() == nullptr) {
-                ((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->setInputComponent1(m_source_component);
-                
-                m_source_component->setOutputComponent(target_component);
-            } else if (isBranchWire(m_source_component->getOutputComponent())) {
-                ((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->setInputComponent1(m_source_component->getOutputComponent());
-                
-                ((BranchWire*) m_source_component->getOutputComponent())->
-                    connectTo(target_component);
-            } else {
-                // Replace an existing wire with BranchWire.
-                BranchWire* branch_wire = new BranchWire();
-                
-                // Introduce the new BranchWire to the circuit.
-                m_owner_circuit->m_component_set.insert(branch_wire);
-                
-                // Load the BranchWire outputs:
-                branch_wire->connectTo(
-                                    m_source_component->getOutputComponent());
-                
-                branch_wire->connectTo(target_component);
-                
-                if (isDoubleInputPinComponent(
-                        m_source_component->getOutputComponent())) {
-                    AbstractDoubleInputPinCircuitComponent* tmp_component =
-                    (AbstractDoubleInputPinCircuitComponent*)
-                    m_source_component->getOutputComponent();
-                    
-                    if (tmp_component->getInputComponent2() ==
-                        m_source_component) {
-                        tmp_component->setInputComponent1(branch_wire);
-                    } else {
-                        tmp_component->setInputComponent2(branch_wire);
-                    }
-                } else {
-                    AbstractSingleInputPinCircuitComponent* tmp_component =
-                    (AbstractSingleInputPinCircuitComponent*)
-                    m_source_component->getOutputComponent();
-                    
-                    tmp_component->setInputComponent(branch_wire);
-                }
-                
-                ((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->setInputComponent1(branch_wire);
-                
-                m_source_component->setOutputComponent(branch_wire);
-                branch_wire->setInputComponent(m_source_component);
-            }
+            return component;
         }
-        
-        void toSecondPinOf(std::string const& target_component_name) {
-            AbstractCircuitComponent* target_component =
-            getTargetComponent(target_component_name);
-            
-            checkIsDoubleInputGate(target_component);
-            
-            if (((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->getInputComponent2() != nullptr) {
-                throw InputPinOccupiedException{
-                    "The second input pin of ... is occupied."
-                };
-            }
-            
-            if (m_source_component->getOutputComponent() == nullptr) {
-                ((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->setInputComponent2(m_source_component);
-                
-                m_source_component->setOutputComponent(target_component);
-            } else if (isBranchWire(m_source_component->getOutputComponent())) {
-                ((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->setInputComponent2(m_source_component->getOutputComponent());
-                
-                ((BranchWire*) m_source_component->getOutputComponent())
-                ->connectTo(target_component);
-            } else {
-                // Replace an existing wire with BranchWire.
-                BranchWire* branch_wire = new BranchWire();
-                
-                // Introduce the new BranchWire to the circuit.
-                m_owner_circuit->m_component_set.insert(branch_wire);
-                
-                // Load the BranchWire outputs:
-                branch_wire->connectTo(
-                    m_source_component->getOutputComponent());
-            
-                branch_wire->connectTo(target_component);
-                
-                if (isDoubleInputPinComponent(
-                        m_source_component->getOutputComponent())) {
-                    AbstractDoubleInputPinCircuitComponent* tmp_component =
-                    (AbstractDoubleInputPinCircuitComponent*)
-                    m_source_component->getOutputComponent();
-                    
-                    if (tmp_component->getInputComponent1() ==
-                        m_source_component) {
-                        tmp_component->setInputComponent1(branch_wire);
-                    } else {
-                        tmp_component->setInputComponent2(branch_wire);
-                    }
-                } else {
-                    AbstractSingleInputPinCircuitComponent* tmp_component =
-                    (AbstractSingleInputPinCircuitComponent*)
-                    m_source_component->getOutputComponent();
-                    
-                    tmp_component->setInputComponent(branch_wire);
-                }
-                
-                ((AbstractDoubleInputPinCircuitComponent*) target_component)
-                ->setInputComponent2(branch_wire);
-                
-                m_source_component->setOutputComponent(branch_wire);
-                branch_wire->setInputComponent(m_source_component);
-            }
-        }
-        
-        void to(std::string const& target_component_name) {
-            AbstractCircuitComponent* target_component =
-            getTargetComponent(target_component_name);
-            
-            checkIsSingleInputGate(target_component);
-            
-            if (((AbstractSingleInputPinCircuitComponent*) target_component)
-                ->getInputComponent() != nullptr) {
-                throw InputPinOccupiedException{
-                    "The only input pin is occupied."
-                };
-            }
-            
-            if (m_source_component->getOutputComponent() == nullptr) {
-                ((AbstractSingleInputPinCircuitComponent*) target_component)
-                ->setInputComponent(m_source_component);
-                
-                m_source_component->setOutputComponent(target_component);
-            } else if (
-                       isBranchWire(m_source_component->getOutputComponent())) {
-                ((AbstractSingleInputPinCircuitComponent*) target_component)
-                ->setInputComponent(m_source_component->getOutputComponent());
-                
-                ((BranchWire*) m_source_component->getOutputComponent())
-                ->connectTo(target_component);
-            } else {
-                // Replace an existing wire with BranchWire.
-                BranchWire* branch_wire = new BranchWire();
-                
-                // Introduce the BranchWire to the circuit.
-                m_owner_circuit->m_component_set.insert(branch_wire);
-                
-                // Load the BranchWire outputs.
-                branch_wire->connectTo(
-                            m_source_component->getOutputComponent());
-                
-                branch_wire->connectTo(target_component);
-                
-                m_source_component->setOutputComponent(branch_wire);
-                ((AbstractSingleInputPinCircuitComponent*) target_component)
-                ->setInputComponent(branch_wire);
-                
-                branch_wire->setInputComponent(m_source_component);
-            }
-        }
-        
-    private:
-        
-        Circuit* m_owner_circuit;
-        AbstractCircuitComponent* m_source_component;
         
         bool isBranchWire(AbstractCircuitComponent* component) {
             return dynamic_cast<BranchWire*>(component) != nullptr;
@@ -500,44 +494,6 @@ namespace circuits {
             (component) != nullptr;
         }
         
-        AbstractCircuitComponent*
-        getTargetComponent(std::string const& target_component_name) {
-            AbstractCircuitComponent* target_component;
-            
-            std::vector<std::string> target_component_name_components =
-                split(target_component_name, '.');
-            
-            if (target_component_name_components.size() > 1) {
-                if (target_component_name_components.size() != 2) {
-                    throw std::invalid_argument{"More than one dot operators."};
-                }
-                
-                Circuit* subcircuit =
-                (Circuit*) m_owner_circuit->
-                    m_component_map[target_component_name_components[0]];
-                
-                if (subcircuit == nullptr) {
-                    throw std::invalid_argument{
-                        "Subcircuit is not present in this circuit."
-                    };
-                }
-                
-                target_component =
-                subcircuit->m_component_map
-                [target_component_name_components[1]];
-            } else {
-                target_component = m_owner_circuit->
-                                   m_component_map[target_component_name];
-            }
-            
-            if (target_component == nullptr) {
-                throw std::invalid_argument{
-                    "The target component is not present in the circuit."
-                };
-            }
-            
-            return target_component;
-        }
         
         void checkIsSingleInputGate(AbstractCircuitComponent* gate) {
             if (dynamic_cast<AbstractSingleInputPinCircuitComponent*>(gate)
@@ -557,6 +513,9 @@ namespace circuits {
             }
         }
     };
+    
+    const std::string Circuit::INPUT_PIN_NAME_PREFIX  = "inputPin";
+    const std::string Circuit::OUTPUT_PIN_NAME_PREFIX = "outputPin";
     
 } // End of namespace net::coderodde::circuits.
 } // End of namespace net::coderodde.
