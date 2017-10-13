@@ -194,13 +194,12 @@ namespace circuits {
             }
         }
         
-        std::vector<bool>&& doCycle(std::vector<bool>& bits) {
+        std::vector<bool> doCycle(std::vector<bool>& bits) {
             setInputBits(bits);
-            doCycle();
             return getOutputBits();
         }
         
-        std::vector<bool>&& getOutputBits() {
+        std::vector<bool> getOutputBits() {
             std::vector<bool> output_bits{};
             output_bits.resize(m_number_of_output_pins);
             
@@ -208,7 +207,7 @@ namespace circuits {
                 output_bits[i] = m_output_gates[i]->doCycle();
             }
             
-            return std::move(output_bits);
+            return output_bits;
         }
         
         std::vector<AbstractCircuitComponent*> getInputComponents() const {
