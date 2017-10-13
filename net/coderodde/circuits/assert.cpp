@@ -42,7 +42,8 @@ void Assert::report() const
     }
     else
     {
-        std::cout << ((float) m_failed_assertions) / m_total_assertions;
+        std::cout << ((float) m_total_assertions - m_failed_assertions) /
+                              m_total_assertions;
     }
     
     std::cout << "]" << std::endl;

@@ -33,6 +33,16 @@ namespace circuits {
         void setBit(bool bit) {
             m_bit = bit;
         }
+
+        std::vector<AbstractCircuitComponent*> getInputComponents() const {
+            std::vector<AbstractCircuitComponent*> input_components;
+            
+            if (m_input != nullptr) {
+                input_components.push_back(m_input);
+            }
+            
+            return input_components;
+        }
         
     private:
         

@@ -17,6 +17,16 @@ namespace circuits {
         bool doCycle() const {
             return m_input->doCycle();
         }
+        
+        std::vector<AbstractCircuitComponent*> getOutputComponents() const {
+            std::vector<AbstractCircuitComponent*> output_components;
+            
+            if (m_output != nullptr) {
+                output_components.push_back(m_output);
+            }
+            
+            return output_components;
+        }
     };
             
 } // End of namespace net::coderodde::circuits.

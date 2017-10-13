@@ -211,7 +211,7 @@ namespace circuits {
             return std::move(output_bits);
         }
         
-        std::vector<AbstractCircuitComponent*>&& getInputComponents() const {
+        std::vector<AbstractCircuitComponent*> getInputComponents() const {
             std::vector<AbstractCircuitComponent*> input_components;
             input_components.assign(m_input_gates.cbegin(),
                                     m_input_gates.cend());
@@ -219,7 +219,7 @@ namespace circuits {
             return std::move(input_components);
         }
         
-        std::vector<AbstractCircuitComponent*>&& getOutputComponents() const {
+        std::vector<AbstractCircuitComponent*> getOutputComponents() const {
             std::vector<AbstractCircuitComponent*> output_components;
             output_components.assign(m_output_gates.cbegin(),
                                      m_output_gates.cend());
@@ -514,14 +514,34 @@ namespace circuits {
                 }
             }
         }
+                
+        void checkInputGateConnected(AbstractCircuitComponent* component) {
+            InputGate* gate = (InputGate*) component;
+            
+            if (gate->getOutputComponent() == nullptr) {
+                throw IncompleteCircuitException{"A"};
+            }
+        }
         
+        void checkOutputGateConnected(AbstractCircuitComponent* component) {
+            OutputGate* gate = (OutputGate*) component;
+            
+            if (gate->getInputComponent() == nullptr) {
+                throw IncompleteCircuitException{"FD"};
+            }
+        }
+                
         void checkAllPinsAreConnected() {
             for (const std::pair<std::string, AbstractCircuitComponent*> p :
                  m_component_map) {
                 std::string name = p.first;
                 AbstractCircuitComponent* component = p.second;
                 
-                if (isSingleInputPinComponent(component)) {
+                if (isInputGate(component)) {
+                    checkInputGateConnected(component);
+                } else if (isOutputGate(component)) {
+                    checkOutputGateConnected(component);
+                } else if (isSingleInputPinComponent(component)) {
                     checkSingleInputComponentConnected(
                             (AbstractSingleInputPinCircuitComponent*) component,
                             name);

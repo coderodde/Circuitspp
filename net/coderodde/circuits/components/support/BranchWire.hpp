@@ -28,7 +28,7 @@ namespace circuits {
             m_outputs.erase(component);
         }
         
-        std::vector<AbstractCircuitComponent*>&& getOutputComponents() {
+        std::vector<AbstractCircuitComponent*> getOutputComponents() const {
             std::vector<AbstractCircuitComponent*> output_components;
             output_components.assign(m_outputs.cbegin(), m_outputs.cend()); 
             return std::move(output_components);

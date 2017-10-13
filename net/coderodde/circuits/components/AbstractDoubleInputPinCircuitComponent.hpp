@@ -33,7 +33,7 @@ namespace circuits {
             m_input2 = input;
         }
         
-        std::vector<AbstractCircuitComponent*>&& getInputComponents() const {
+        std::vector<AbstractCircuitComponent*> getInputComponents() const {
             std::vector<AbstractCircuitComponent*> input_components = {
                 m_input1, m_input2
             };
@@ -41,7 +41,7 @@ namespace circuits {
             return std::move(input_components);
         }
         
-        std::vector<AbstractCircuitComponent*>&& getOutputComponents() const {
+        std::vector<AbstractCircuitComponent*> getOutputComponents() const {
             std::vector<AbstractCircuitComponent*> output_components = {
                 m_output
             };

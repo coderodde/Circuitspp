@@ -33,10 +33,10 @@ namespace circuits {
             this->m_output = output;
         }
         
-        virtual std::vector<AbstractCircuitComponent*>&&
+        virtual std::vector<AbstractCircuitComponent*>
             getInputComponents() const = 0;
         
-        virtual std::vector<AbstractCircuitComponent*>&&
+        virtual std::vector<AbstractCircuitComponent*>
             getOutputComponents() const = 0;
     };
     

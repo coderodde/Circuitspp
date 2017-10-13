@@ -29,20 +29,20 @@ namespace circuits {
             m_input = input;
         }
         
-        std::vector<AbstractCircuitComponent*>&& getInputComponents() const {
+        std::vector<AbstractCircuitComponent*> getInputComponents() const {
             std::vector<AbstractCircuitComponent*> input_components = {
                 m_input
             };
             
-            return std::move(input_components);
+            return input_components;
         }
         
-        std::vector<AbstractCircuitComponent*>&& getOutputComponents() const {
+        std::vector<AbstractCircuitComponent*> getOutputComponents() const {
             std::vector<AbstractCircuitComponent*> output_components = {
                 m_output
             };
             
-            return std::move(output_components);
+            return output_components;
         }
     };
     
