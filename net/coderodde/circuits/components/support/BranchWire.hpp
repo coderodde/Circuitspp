@@ -14,7 +14,7 @@ namespace circuits {
     class BranchWire : public AbstractSingleInputPinCircuitComponent {
     public:
         
-        BranchWire() : AbstractSingleInputPinCircuitComponent{nullptr} {}
+        BranchWire() : AbstractSingleInputPinCircuitComponent{"dummy_name"} {}
         
         bool doCycle() const {
             return m_input->doCycle();

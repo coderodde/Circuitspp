@@ -15,6 +15,7 @@
 #include "components/support/OrGate.hpp"
 #include "components/support/OutputGate.hpp"
 
+#include <algorithm>
 #include <iterator>
 #include <sstream>
 #include <stdexcept>
@@ -47,8 +48,11 @@ namespace circuits {
             for (size_t input_pin = 0;
                  input_pin < m_number_of_input_pins;
                  input_pin++) {
-                std::string input_component_name = INPUT_PIN_NAME_PREFIX;
-                input_component_name += input_pin;
+                std::stringstream ss;
+                ss << INPUT_PIN_NAME_PREFIX << input_pin;
+                std::string input_component_name;
+                input_component_name = ss.str();
+                
                 InputGate* input_component =
                     new InputGate{input_component_name};
                 
@@ -60,8 +64,11 @@ namespace circuits {
             for (size_t output_pin = 0;
                  output_pin < m_number_of_output_pins;
                  output_pin++) {
-                std::string output_component_name = OUTPUT_PIN_NAME_PREFIX;
-                output_component_name += output_pin;
+                std::stringstream ss;
+                ss << OUTPUT_PIN_NAME_PREFIX << output_pin;
+                std::string output_component_name;
+                output_component_name = ss.str();
+                
                 OutputGate* output_component =
                     new OutputGate(output_component_name);
                 
@@ -96,7 +103,7 @@ namespace circuits {
             for (AbstractCircuitComponent* component :
                  circuit.m_component_set) {
                 if (!isInputGate(component) && !isOutputGate(component)) {
-                    component_map[component, copyComponent(component)];
+                    component_map[component] = copyComponent(component);
                 }
             }
                     
@@ -418,6 +425,84 @@ namespace circuits {
         
     private:
         
+        bool isInputGate(AbstractCircuitComponent* input_gate_candidate) {
+            return dynamic_cast<InputGate*>(input_gate_candidate) != nullptr;
+        }
+        
+        bool isOutputGate(AbstractCircuitComponent* output_gate_candidate) {
+            return dynamic_cast<OutputGate*>(output_gate_candidate) != nullptr;
+        }
+        
+        bool isAndGate(AbstractCircuitComponent* and_gate_candidiate) {
+            return dynamic_cast<AndGate*>(and_gate_candidiate) != nullptr;
+        }
+        
+        bool isOrGate(AbstractCircuitComponent* or_gate_candidate) {
+            return dynamic_cast<OrGate*>(or_gate_candidate) != nullptr;
+        }
+        
+        bool isNotGate(AbstractCircuitComponent* not_gate_candidate) {
+            return dynamic_cast<NotGate*>(not_gate_candidate) != nullptr;
+        }
+        
+        bool isBranchWire(AbstractCircuitComponent* branch_wire_candidate) {
+            return dynamic_cast<BranchWire*>(branch_wire_candidate) != nullptr;
+        }
+        
+        AbstractCircuitComponent* copyComponent(
+                                                AbstractCircuitComponent* component) {
+            if (isNotGate(component)) {
+                return new NotGate(component->getName());
+            }
+            
+            if (isAndGate(component)) {
+                return new AndGate(component->getName());
+            }
+            
+            if (isOrGate(component)) {
+                return new OrGate(component->getName());
+            }
+            
+            if (isBranchWire(component)) {
+                return new BranchWire();
+            }
+            
+            throw std::logic_error{"Should not get here."};
+        }
+        
+        void connectInput(AbstractCircuitComponent* component,
+                          AbstractCircuitComponent* input_component,
+                          AbstractCircuitComponent* mapped_component,
+                          AbstractCircuitComponent* mapped_input_component) {
+            if (isSingleInputPinComponent(mapped_component)) {
+                ((AbstractSingleInputPinCircuitComponent*) mapped_component)
+                ->setInputComponent(mapped_input_component);
+            } else {
+                AbstractDoubleInputPinCircuitComponent* component1 =
+                (AbstractDoubleInputPinCircuitComponent*) mapped_component;
+                
+                AbstractDoubleInputPinCircuitComponent* component2 =
+                (AbstractDoubleInputPinCircuitComponent*) component;
+                
+                if (input_component == component2->getInputComponent1()) {
+                    component1->setInputComponent1(mapped_input_component);
+                } else {
+                    component1->setInputComponent2(mapped_input_component);
+                }
+            }
+        }
+        
+        void connectOutput(AbstractCircuitComponent* component,
+                           AbstractCircuitComponent* mapped_component,
+                           AbstractCircuitComponent* mapped_output_component) {
+            if (isBranchWire(component)) {
+                BranchWire* branch_wire = (BranchWire*) mapped_component;
+                branch_wire->connectTo(mapped_output_component);
+            } else {
+                mapped_component->setOutputComponent(mapped_output_component);
+            }
+        }
+        
         bool isCircuit(AbstractCircuitComponent* circuit_candidate) {
             return dynamic_cast<Circuit*>(circuit_candidate) != nullptr;
         }
@@ -578,19 +663,25 @@ namespace circuits {
             }
         }
         
+        bool hasPrefix(std::string const& str, std::string const& prefix) {
+            return std::mismatch(prefix.begin(),
+                                 prefix.end(),
+                                 str.begin()).first == prefix.end();
+        }
+        
         const std::string checkNewGateName(const std::string& gate_name) {
             if (gate_name.empty()) {
                 throw std::invalid_argument{"The name of a new gate is empty."};
             }
             
-            if (gate_name.find(INPUT_PIN_NAME_PREFIX) == 0
-                || gate_name.find(OUTPUT_PIN_NAME_PREFIX)) {
+            if (hasPrefix(gate_name, INPUT_PIN_NAME_PREFIX) ||
+                hasPrefix(gate_name, OUTPUT_PIN_NAME_PREFIX)) {
                 throw std::invalid_argument{
                     "The new gate name has invalid prefix."
                 };
             }
             
-            if (m_component_map.find(gate_name) != m_component_map.end()) {
+            if (m_component_map.find(gate_name) != m_component_map.cend()) {
                 throw std::invalid_argument{
                     "The new gate name is already occupied."
                 };
@@ -744,52 +835,6 @@ namespace circuits {
             
             colors[component] = Color::BLACK;
         }
-        
-        bool isInputGate(AbstractCircuitComponent* input_gate_candidate) {
-            return dynamic_cast<InputGate*>(input_gate_candidate) != nullptr;
-        }
-        
-        bool isOutputGate(AbstractCircuitComponent* output_gate_candidate) {
-            return dynamic_cast<OutputGate*>(output_gate_candidate) != nullptr;
-        }
-        
-        bool isAndGate(AbstractCircuitComponent* and_gate_candidiate) {
-            return dynamic_cast<AndGate*>(and_gate_candidiate) != nullptr;
-        }
-        
-        bool isOrGate(AbstractCircuitComponent* or_gate_candidate) {
-            return dynamic_cast<OrGate*>(or_gate_candidate) != nullptr;
-        }
-        
-        bool isNotGate(AbstractCircuitComponent* not_gate_candidate) {
-            return dynamic_cast<NotGate*>(not_gate_candidate) != nullptr;
-        }
-        
-        bool isBranchWire(AbstractCircuitComponent* branch_wire_candidate) {
-            return dynamic_cast<BranchWire*>(branch_wire_candidate) != nullptr;
-        }
-        
-        AbstractCircuitComponent* copyComponent(
-            AbstractCircuitComponent* component) {
-            if (isNotGate(component)) {
-                return new NotGate(component->getName());
-            }
-            
-            if (isAndGate(component)) {
-                return new AndGate(component->getName());
-            }
-            
-            if (isOrGate(component)) {
-                return new OrGate(component->getName());
-            }
-            
-            if (isBranchWire(component)) {
-                return new BranchWire();
-            }
-            
-            throw std::logic_error{"Should not get here."};
-        }
-        
     };
     
     const std::string Circuit::INPUT_PIN_NAME_PREFIX  = "inputPin";

@@ -17,8 +17,10 @@ namespace circuits {
         AbstractCircuitComponent* m_input2;
         
     public:
-        AbstractDoubleInputPinCircuitComponent(const std::string& name)
-        : AbstractCircuitComponent{name} {}
+        AbstractDoubleInputPinCircuitComponent(const std::string& name) :
+        AbstractCircuitComponent{name},
+        m_input1{nullptr},
+        m_input2{nullptr} {}
         
         AbstractCircuitComponent* getInputComponent1() { return m_input1; }
         AbstractCircuitComponent* getInputComponent2() { return m_input2; }

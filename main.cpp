@@ -1,20 +1,35 @@
+#include "assert.hpp"
+#include "net/coderodde/circuits/BackwardCycleException.hpp"
 #include "net/coderodde/circuits/Circuit.hpp"
-#include "net/coderodde/circuits/components/support/AndGate.hpp"
-#include "net/coderodde/circuits/components/support/NotGate.hpp"
-#include "net/coderodde/circuits/components/support/OrGate.hpp"
-#include "net/coderodde/circuits/components/support/InputGate.hpp"
-#include <iostream>
+#include "net/coderodde/circuits/ForwardCycleException.hpp"
 
-using net::coderodde::circuits::NotGate;
-using net::coderodde::circuits::AndGate;
-using net::coderodde::circuits::OrGate;
-using net::coderodde::circuits::InputGate;
+using net::coderodde::circuits::BackwardCycleException;
 using net::coderodde::circuits::Circuit;
+using net::coderodde::circuits::ForwardCycleException;
 
-int main(int argc, const char * argv[]) {
-    NotGate notGate{"not"};
-    AndGate andGate{"and"};
-    OrGate orGate{"or"};
-    InputGate inputGate{"input", true};
-    Circuit circuit{"yeah", 1, 2};
+void testFindsForwardCycle() {
+    Circuit c{"c", 1, 1, };
+    
+    c.addAndGate("and");
+    c.connectToFirstInputPin("inputPin0", "and");
+    c.connectTo("and", "outputPin0");
+    c.connectToSecondInputPin("and", "and");
+    
+    try {
+        c.lock();
+        ASSERT(false); // Should not get here.
+    } catch (ForwardCycleException& ex) {
+        
+    } catch (...) {
+        ASSERT(false); // Should not get here.
+    }
+}
+
+void test() {
+    testFindsForwardCycle();
+}
+
+int main() {
+    test();
+    REPORT
 }

@@ -16,7 +16,10 @@ namespace circuits {
         
     public:
         
-        AbstractCircuitComponent(const std::string& name) : m_name{name} {}
+        AbstractCircuitComponent(const std::string& name) :
+        m_name{name},
+        m_output{nullptr}
+        {}
         
         std::string const& getName() const { return m_name; }
         
