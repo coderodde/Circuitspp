@@ -18,7 +18,7 @@ namespace circuits {
         AbstractSingleInputPinCircuitComponent{name} {}
                 
         bool doCycle() const {
-            return !m_input;
+            return !m_input->doCycle();
         }
     };
             

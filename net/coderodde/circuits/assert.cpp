@@ -42,8 +42,11 @@ void Assert::report() const
     }
     else
     {
-        std::cout << ((float) m_total_assertions - m_failed_assertions) /
-                              m_total_assertions;
+        float percent = ((float) m_total_assertions - m_failed_assertions) /
+                                 m_total_assertions;
+        percent *= 100.0;
+        
+        std::cout << percent << "%";
     }
     
     std::cout << "]" << std::endl;
