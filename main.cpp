@@ -3,11 +3,126 @@
 #include "net/coderodde/circuits/Circuit.hpp"
 #include "net/coderodde/circuits/ForwardCycleException.hpp"
 #include "net/coderodde/circuits/InputPinOccupiedException.hpp"
+#include <iostream>
+#include <sstream>
 
 using net::coderodde::circuits::BackwardCycleException;
 using net::coderodde::circuits::Circuit;
 using net::coderodde::circuits::ForwardCycleException;
 using net::coderodde::circuits::InputPinOccupiedException;
+
+std::string toBinaryString(std::vector<bool>& bits) {
+    std::stringstream ss;
+    std::string str;
+    
+    for (bool b : bits) {
+        ss << (b ? '1' : '0');
+    }
+    
+    return ss.str();
+}
+
+void demo() {
+    std::cout << "xor:\n";
+    
+    //// The xor gate:
+    Circuit xor1{"xor1", 2, 1};
+    
+    xor1.addAndGate("and1");
+    xor1.addAndGate("and2");
+    xor1.addNotGate("not1");
+    xor1.addNotGate("not2");
+    xor1.addOrGate("or");
+    
+    xor1.connectTo("inputPin0", "not1");
+    xor1.connectToFirstInputPin("not1", "and1");
+    xor1.connectToSecondInputPin("inputPin1", "and1");
+    
+    xor1.connectTo("inputPin1", "not2");
+    xor1.connectToSecondInputPin("not2", "and2");
+    xor1.connectToFirstInputPin("inputPin0", "and2");
+    
+    xor1.connectToFirstInputPin("and1", "or");
+    xor1.connectToSecondInputPin("and2", "or");
+    xor1.connectTo("or", "outputPin0");
+    
+    for (bool bit1 : { false, true }) {
+        for (bool bit2 : { false, true }) {
+            std::vector<bool> input = { bit1, bit2 };
+            std::vector<bool> output = xor1.doCycle(input);
+            std::cout << toBinaryString(input);
+            std::cout << " " << output[0] << "\n";
+        }
+    }
+    
+    //// The 2-bit by 2-bit addition circuit:
+    std::cout << "\n2-bit by 2-bit addition:\n";
+    
+    Circuit c {"additionCircuit", 4, 3};
+    Circuit xor2{xor1, "xor2"};
+    Circuit xor3{xor1, "xor3"};
+    
+    c.addCircuit(xor1);
+    c.addCircuit(xor2);
+    c.addCircuit(xor3);
+    
+    c.addAndGate("and1");
+    c.addAndGate("and2");
+    c.addAndGate("and3");
+    c.addAndGate("and4");
+    
+    c.addOrGate("or1");
+    c.addOrGate("or2");
+    
+    // Output bit 1:
+    c.connectTo("inputPin0", "xor1.inputPin0");
+    c.connectTo("inputPin2", "xor1.inputPin1");
+    c.connectTo("xor1.outputPin0", "outputPin2");
+    
+    // Carry bit:
+    c.connectToFirstInputPin("inputPin0", "and1");
+    c.connectToSecondInputPin("inputPin2", "and1");
+    
+    // Output bit 2:
+    c.connectTo("and1", "xor2.inputPin0");
+    c.connectTo("inputPin1", "xor2.inputPin1");
+    c.connectTo("inputPin3", "xor3.inputPin1");
+    c.connectTo("xor2.outputPin0", "xor3.inputPin0");
+    c.connectTo("xor3.outputPin0", "outputPin1");
+    
+    // Output bit3:
+    c.connectToFirstInputPin("inputPin1", "and2");
+    c.connectToSecondInputPin("inputPin3", "and2");
+    c.connectToFirstInputPin("and1", "and3");
+    c.connectToSecondInputPin("inputPin1", "and3");
+    c.connectToFirstInputPin("and1", "and4");
+    c.connectToSecondInputPin("inputPin3", "and4");
+    
+    c.connectToFirstInputPin("and2", "or1");
+    c.connectToSecondInputPin("and3", "or1");
+    c.connectToFirstInputPin("or1", "or2");
+    c.connectToSecondInputPin("and4", "or2");
+    c.connectTo("or2", "outputPin0");
+    
+    for (bool bit1 : { false, true }) {
+        for (bool bit0 : { false, true }) {
+            for (bool bit3 : { false, true }) {
+                for (bool bit2 : { false, true }) {
+                    std::vector<bool> inputInt1 = { bit1, bit0 };
+                    std::vector<bool> inputInt2 = { bit3, bit2 };
+                    std::vector<bool> input = { bit0, bit1, bit2, bit3 };
+                    std::vector<bool> output = c.doCycle(input);
+                    std::cout << toBinaryString(inputInt1)
+                              << " + "
+                              << toBinaryString(inputInt2)
+                              << " = "
+                              << toBinaryString(output)
+                              << "\n";
+                }
+            }
+        }
+    }
+}
 
 void testFindsForwardCycle() {
     Circuit c{"c", 1, 1, };
@@ -151,7 +266,7 @@ void testSubcircuit() {
     subcircuit.connectTo("and", "outputPin0");
     
     Circuit circuit {"myCircuit", 2, 1};
-    circuit.addCircuit(&subcircuit);
+    circuit.addCircuit(subcircuit);
     circuit.addNotGate("not");
     
     circuit.connectTo("inputPin0", "mySubcircuit.inputPin0");
@@ -211,6 +326,7 @@ void test() {
 }
 
 int main() {
+    demo();
     test();
     REPORT
 }

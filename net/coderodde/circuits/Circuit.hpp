@@ -163,11 +163,11 @@ namespace circuits {
             m_component_set.insert(or_gate);
         }
         
-        void addCircuit(Circuit* circuit) {
+        void addCircuit(Circuit& circuit) {
             checkIsNotLocked();
-            checkNewGateName(circuit->getName());
-            m_component_map[circuit->getName()] = circuit;
-            m_component_set.insert(circuit);
+            checkNewGateName(circuit.getName());
+            m_component_map[circuit.getName()] = &circuit;
+            m_component_set.insert(&circuit);
         }
         
         size_t getNumberOfInputPins() {
