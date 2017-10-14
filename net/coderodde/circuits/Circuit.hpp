@@ -134,6 +134,14 @@ namespace circuits {
                 }
             }
         }
+                
+        ~Circuit() {
+            for (AbstractCircuitComponent* component : m_component_set) {
+                if (m_circuit_set.find(component) == m_circuit_set.end()) {
+                    delete component;
+                }
+            }
+        }
         
         size_t size() {
             return m_component_set.size();
@@ -168,6 +176,7 @@ namespace circuits {
             checkNewGateName(circuit.getName());
             m_component_map[circuit.getName()] = &circuit;
             m_component_set.insert(&circuit);
+            m_circuit_set.insert(&circuit);
         }
         
         size_t getNumberOfInputPins() {
@@ -215,7 +224,7 @@ namespace circuits {
             input_components.assign(m_input_gates.cbegin(),
                                     m_input_gates.cend());
             
-            return std::move(input_components);
+            return input_components;
         }
         
         std::vector<AbstractCircuitComponent*> getOutputComponents() const {
@@ -223,7 +232,7 @@ namespace circuits {
             output_components.assign(m_output_gates.cbegin(),
                                      m_output_gates.cend());
             
-            return std::move(output_components);
+            return output_components;
         }
         
         void connectToFirstInputPin(std::string const& source_component_name,
@@ -614,6 +623,7 @@ namespace circuits {
         std::unordered_map<std::string,
                            AbstractCircuitComponent*> m_component_map;
         std::unordered_set<AbstractCircuitComponent*> m_component_set;
+        std::unordered_set<AbstractCircuitComponent*> m_circuit_set;
         
         const size_t m_number_of_input_pins;
         const size_t m_number_of_output_pins;

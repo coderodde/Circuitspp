@@ -31,7 +31,7 @@ namespace circuits {
         std::vector<AbstractCircuitComponent*> getOutputComponents() const {
             std::vector<AbstractCircuitComponent*> output_components;
             output_components.assign(m_outputs.cbegin(), m_outputs.cend()); 
-            return std::move(output_components);
+            return output_components;
         }
         
     private:

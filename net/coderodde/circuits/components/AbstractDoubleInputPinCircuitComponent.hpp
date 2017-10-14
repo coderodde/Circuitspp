@@ -38,7 +38,7 @@ namespace circuits {
                 m_input1, m_input2
             };
             
-            return std::move(input_components);
+            return input_components;
         }
         
         std::vector<AbstractCircuitComponent*> getOutputComponents() const {
@@ -46,7 +46,7 @@ namespace circuits {
                 m_output
             };
             
-            return std::move(output_components);
+            return output_components;
         }
     };
             

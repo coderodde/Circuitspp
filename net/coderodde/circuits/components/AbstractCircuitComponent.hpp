@@ -21,6 +21,8 @@ namespace circuits {
         m_output{nullptr}
         {}
         
+        virtual ~AbstractCircuitComponent() {}
+        
         std::string const& getName() const { return m_name; }
         
         virtual bool doCycle() const = 0;
